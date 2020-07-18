@@ -8,8 +8,12 @@ import java.net.Proxy;
 import java.net.URL;
 
 public class HTTPClient {
-	
-	public String sendGET(String url) throws Exception{
+	public static void main(String[] args) throws Exception {
+		HTTPClient h = new HTTPClient();
+		String test = h.sendGETUsingProxy("https://www.etsy.com/listing/822335860/zodiac-sign-digital-leo-printable?ref=shop_home_active_10&pro=1", "80.94.229.172", 3128);
+		System.out.println(test);
+	}
+	public StringBuilder sendGET(String url) throws Exception{
         HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
         return sendHttpGet(connection);
 	}
@@ -17,13 +21,16 @@ public class HTTPClient {
 	public String sendGETUsingProxy(String url, String ip, int port) throws Exception{
 		Proxy webProxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(ip, port));
         HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection(webProxy);
-
-        return sendHttpGet(connection);
+        connection.setRequestMethod("GET");
+        connection.connect();
+    	return String.valueOf(connection.getResponseCode());
+//        return sendHttpGet(connection);
+        
 	}
 	
-	private String sendHttpGet(HttpURLConnection connection) throws Exception{
+	private StringBuilder sendHttpGet(HttpURLConnection connection) throws Exception{
 		connection.setRequestMethod("GET");
-
+		
         try (BufferedReader in = new BufferedReader(
                 new InputStreamReader(connection.getInputStream()))) {
 
@@ -31,49 +38,9 @@ public class HTTPClient {
             String line;
 
             while ((line = in.readLine()) != null) {
-                response.append(line);
+                response.append(line + System.lineSeparator());
             }
-
-            return response.toString();
+            return response;
         }
 	}
-
-//	public String sendPost() throws Exception {
-//        String url = "http://46.101.113.185/";
-//
-//        HttpURLConnection httpClient = (HttpURLConnection) new URL(url).openConnection();
-//
-//        httpClient.setRequestMethod("POST");
-////        httpClient.setRequestProperty("User-Agent", "Mozilla/5.0");
-////        httpClient.setRequestProperty("Accept-Language", "en-US,en;q=0.5");
-//
-//        String urlParameters = "https://www.etsy.com/listing/832696465/aquamarine-bracelet-raw-stone-jewelry?ref=hp_rf-2&pro=1&frs=1";
-////Щ
-//        httpClient.setDoOutput(true);
-//        try (DataOutputStream wr = new DataOutputStream(httpClient.getOutputStream())) {
-//            wr.writeBytes(urlParameters);
-//            wr.flush();
-//        }
-//
-//        int responseCode = httpClient.getResponseCode();
-//        System.out.println("\nSending 'POST' request to URL : " + url);
-////        System.out.println("Post parameters : " + urlParameters);
-//        System.out.println("Response Code : " + responseCode);
-//
-//        try (BufferedReader in = new BufferedReader(
-//                new InputStreamReader(httpClient.getInputStream()))) {
-//
-//            String line;
-//            StringBuilder response = new StringBuilder();
-//
-//            while ((line = in.readLine()) != null) {
-//                response.append(line);
-//            }
-//
-//            //print result
-//            System.out.println(response.toString());
-//            return response.toString();
-//        }
-//
-//    }
 }
