@@ -2,60 +2,54 @@ package com.digitalartstudio.bot;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
-import java.util.stream.Stream;
+import java.util.Map;
 
 import com.digitalartstudio.api.ProxyAPI;
 import com.digitalartstudio.network.HTTPClient;
 
-public class Bot {
+public abstract class Bot {
 	
-	private HTTPClient httpClient;
-	private List<ProxyAPI> proxy;
+	private List<ProxyAPI> proxies;
 	
 	public Bot() {
-		this.httpClient = new HTTPClient();
-		proxy = new ArrayList<>();
+		proxies = new ArrayList<>();
 	}
 	
 	public void viewPage(String... pages) {
-		proxy.forEach(proxy -> {
-			if(Objects.nonNull(proxy.getIpAndPort())) {
-				proxy.getIpAndPort().forEach((ip, port) -> {
-					Stream.of(pages).forEach(page -> {
-						new Thread(() -> {
-							try {
-								String responseCode = httpClient.sendGETUsingProxy(page, ip, port);
-								System.out.println("yes: " + responseCode + "  " + ip + ":" + port);
-							} catch (Exception e) {
-								System.out.println("no: " + ip + ":" + port + "   " + e.getMessage());
-							}
-						}).start();
-					});
+		proxies.forEach(proxy -> {
+			new Thread(() -> {
+				Map<String, Integer> remotes = proxy.getRemoteHosts();
+				remotes.forEach((proxyIp, proxyPort) -> {
+					for(String destUrl : pages) {
+						try {
+							HTTPClient httpClient = new HTTPClient();
+							httpClient.openConnectionUsingProxy(destUrl, proxyIp, proxyPort);
+							httpClient.setHeader("User-Agent", "Mozilla/5.0");
+							httpClient.setHeader("Keep-Alive", "300");
+							httpClient.setHTTPMethod("GET");
+							httpClient.connect();
+							System.out.println("OK: " + httpClient.getResponseCode() + ", using proxy? " + httpClient.usingProxy() + ", " + proxyIp + ":" + proxyPort);
+						}catch(Exception e) {
+							e.printStackTrace();
+							break;
+						}
+					}
 				});
-			}
+			}).start();
 		});
 	}
 	
-	public void addToCart() {}
-	
-	
 	public void lookupProxyList(ProxyAPI api) {
+		HTTPClient httpClient = new HTTPClient();
 		api.getUrls().forEach(url -> {
 			try {
-				StringBuilder httpResponse = httpClient.sendGET(url);
+				httpClient.openConnection(url);
+				StringBuilder httpResponse = httpClient.readResponse();
 				api.readResponse(httpResponse);
 			}catch (Exception e) {
 				e.printStackTrace();
 			}
 		});
-		proxy.add(api);
-	}
-	
-	public HTTPClient getHttpCliet() {
-		return httpClient;
-	}
-	public void setHttpCliet(HTTPClient httpCliet) {
-		this.httpClient = httpCliet;
+		proxies.add(api);
 	}
 }

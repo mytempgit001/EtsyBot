@@ -22,7 +22,7 @@ public class FoxtoolsAPI implements ProxyAPI{
 	}
 
 	@Override
-	public Map<String, Integer> getIpAndPort() {
+	public Map<String, Integer> getRemoteHosts() {
 		return response != null ? response.getItems().stream().collect(Collectors.toMap(ProxyResultItem::getIp, ProxyResultItem::getPort)) : null;
 	}
 
