@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.CookieManager;
 import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
@@ -12,6 +13,8 @@ import java.net.Proxy;
 import java.net.URL;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.net.ssl.HttpsURLConnection;
 
@@ -90,19 +93,23 @@ public class HTTPClient {
         httpClient.setRequestMethod("POST");
         httpClient.setRequestProperty("User-Agent", "Mozilla/5.0");
         httpClient.setRequestProperty("Accept-Language", "en-US,en;q=0.5");
-        httpClient.setRequestProperty("cookie", cookie);
-        System.out.println(httpClient.getRequestProperties());
+        httpClient.setRequestProperty("Connection", "Keep-Alive");
+        httpClient.setRequestProperty("Cookie", cookie);
+        
+        httpClient.getRequestProperties().forEach((entry, key) -> {
+        	if(entry.equals("Cookie"))
+        		System.out.println(key.get(0));
+        });
+        System.out.println("");
+        System.out.println(urlParameters);
+        
         httpClient.setDoOutput(true);
         try (DataOutputStream wr = new DataOutputStream(httpClient.getOutputStream())) {
             wr.writeBytes(urlParameters);
             wr.flush();
         }
 
-        int responseCode = httpClient.getResponseCode();
-//        System.out.println("\nSending 'POST' request to URL : " + url);
-//        System.out.println("Post parameters : " + System.lineSeparator() + urlParameters);
-//        System.out.println("cookie: " + cookie);
-        System.out.println("Response Code : " + responseCode + "MESSAGE: " + httpClient.getResponseMessage());
+        System.out.println("Response Code : " + httpClient.getResponseCode() + " MESSAGE: " + httpClient.getResponseMessage());
 
         
         try (BufferedReader in = new BufferedReader(
