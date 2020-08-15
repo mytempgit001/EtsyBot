@@ -6,6 +6,6 @@ import java.util.Map;
 public interface ProxyAPI {
 	
 	List<String> getUrls();
-	Map<String, Integer> getIpAndPort();
+	Map<String, Integer> getRemoteHosts();
 	void readResponse(StringBuilder response);
 }

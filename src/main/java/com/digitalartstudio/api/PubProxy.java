@@ -19,7 +19,7 @@ public class PubProxy implements ProxyAPI{
 	}
 
 	@Override
-	public Map<String, Integer> getIpAndPort() {
+	public Map<String, Integer> getRemoteHosts() {
 		return response != null ? response.getData().stream().collect(Collectors.toMap(Data::getIp, Data::getPort)) : null;
 	}
 

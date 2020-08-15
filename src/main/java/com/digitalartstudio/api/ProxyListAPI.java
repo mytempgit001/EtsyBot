@@ -21,7 +21,7 @@ public class ProxyListAPI implements ProxyAPI{
 	}
 	
 	@Override
-	public Map<String, Integer> getIpAndPort() {
+	public Map<String, Integer> getRemoteHosts() {
 		return inetAddresses;
 	}
 
