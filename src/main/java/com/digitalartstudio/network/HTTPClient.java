@@ -1,36 +1,73 @@
 package com.digitalartstudio.network;
 
 import java.io.BufferedReader;
+import java.io.DataOutputStream;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
+import java.net.MalformedURLException;
+import java.net.ProtocolException;
 import java.net.Proxy;
 import java.net.URL;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import javax.net.ssl.HttpsURLConnection;
 
 public class HTTPClient {
-	public static void main(String[] args) throws Exception {
-		HTTPClient h = new HTTPClient();
-		String test = h.sendGETUsingProxy("https://www.etsy.com/listing/822335860/zodiac-sign-digital-leo-printable?ref=shop_home_active_10&pro=1", "80.94.229.172", 3128);
-		System.out.println(test);
-	}
-	public StringBuilder sendGET(String url) throws Exception{
-        HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
-        return sendHttpGet(connection);
+	
+	private HttpURLConnection connection;
+	
+	public void openConnectionProxy(String destUrl, String proxyIp, int proxyPort) throws MalformedURLException, IOException {
+		Proxy webProxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(proxyIp, proxyPort));
+		connection = (HttpURLConnection) new URL(destUrl).openConnection(webProxy);
 	}
 	
-	public String sendGETUsingProxy(String url, String ip, int port) throws Exception{
-		Proxy webProxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(ip, port));
-        HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection(webProxy);
-        connection.setRequestMethod("GET");
-        connection.connect();
-    	return String.valueOf(connection.getResponseCode());
-//        return sendHttpGet(connection);
-        
+	public void openSecureConnectionProxy(String destUrl, String proxyIp, int proxyPort) throws MalformedURLException, IOException {
+		Proxy webProxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(proxyIp, proxyPort));
+		connection = (HttpsURLConnection) new URL(destUrl).openConnection(webProxy);
 	}
 	
-	private StringBuilder sendHttpGet(HttpURLConnection connection) throws Exception{
-		connection.setRequestMethod("GET");
-		
+	public void openConnection(String destUrl) throws MalformedURLException, IOException {
+		connection = (HttpURLConnection) new URL(destUrl).openConnection();
+	}
+	
+	public void openSecureConnection(String destUrl) throws MalformedURLException, IOException {
+		connection = (HttpsURLConnection) new URL(destUrl).openConnection();
+	}
+	
+	public void setHTTPMethod(String method) throws ProtocolException {
+		connection.setRequestMethod(method);
+	}
+	
+	public boolean usingProxy() {
+		return connection.usingProxy();
+	}
+	
+	public void setHeader(String key, String value) {
+		connection.setRequestProperty(key, value);
+	}
+	
+	public void connect() throws IOException {
+		connection.connect();
+	}
+	
+	public int getResponseCode() throws IOException {
+		return connection.getResponseCode();
+	}
+	
+	public List<String> separateCookieFromMeta(){
+		return connection.getHeaderFields().get("Set-Cookie").parallelStream().map(str -> str.split(";")[0]).collect(Collectors.toList());
+	}
+	
+	public void setDeafaultOptions(String method) throws Exception {
+		setHeader("User-Agent", "Mozilla/5.0");
+		setHeader("Connection", "Keep-Alive");
+		setHTTPMethod(method);
+	}
+	
+	public StringBuilder readHTTPBodyResponse() throws Exception{
         try (BufferedReader in = new BufferedReader(
                 new InputStreamReader(connection.getInputStream()))) {
 
@@ -42,5 +79,29 @@ public class HTTPClient {
             }
             return response;
         }
+	}
+	
+	public boolean writeHTTPBodyRequest(String body)  {
+		connection.setDoOutput(true);
+        try (DataOutputStream wr = new DataOutputStream(connection.getOutputStream())) {
+            wr.writeBytes(body);
+            wr.flush();
+        }catch(IOException e) {
+        	e.printStackTrace();
+        	return false;
+        }
+        return true;
+	}
+	
+	public void disconnect() {
+		connection.disconnect();
+	}
+	
+	public HttpURLConnection getConnection() {
+		return connection;
+	}
+	
+	public void setConnection(HttpURLConnection connection) {
+		this.connection = connection;
 	}
 }

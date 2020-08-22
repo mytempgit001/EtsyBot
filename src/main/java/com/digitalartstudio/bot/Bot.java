@@ -8,52 +8,51 @@ import com.digitalartstudio.api.ProxyAPI;
 import com.digitalartstudio.network.HTTPClient;
 
 public class Bot {
-	
-	private HTTPClient httpClient;
-	private List<ProxyAPI> proxy;
+
+	protected List<ProxyAPI> proxies;
 	
 	public Bot() {
-		this.httpClient = new HTTPClient();
-		proxy = new ArrayList<>();
+		proxies = new ArrayList<>();
 	}
 	
 	public void viewPage(String... pages) {
-		proxy.forEach(proxy -> {
-			proxy.getIpAndPort().forEach((ip, port) -> {
-				Stream.of(pages).forEach(page -> {
-					new Thread(() -> {
+		proxies.forEach(proxy -> {
+			proxy.getRemoteHosts().forEach((proxyIp, proxyPort) -> {
+				new Thread(() -> {
+					for(String destUrl : pages) {
+						HTTPClient httpClient = new HTTPClient();
 						try {
-							String responseCode = httpClient.sendGETUsingProxy(page, ip, port);
-							System.out.println("yes: " + responseCode + "  " + ip + ":" + port);
-						} catch (Exception e) {
-							System.out.println("no: " + ip + ":" + port + "   " + e.getMessage());
+							httpClient.openConnectionProxy(destUrl, proxyIp, proxyPort);
+							httpClient.setHeader("User-Agent", "Mozilla/5.0");
+							httpClient.setHeader("Keep-Alive", "300");
+							httpClient.setHTTPMethod("GET");
+							httpClient.connect();
+							System.out.println("OK: " + httpClient.getResponseCode() + ", using proxy? " + httpClient.usingProxy() + ", " + proxyIp + ":" + proxyPort);
+						}catch(Exception e) {
+							e.printStackTrace();
+							break;
 						}
-					}).start();
-					
-				});
+						httpClient.disconnect();
+					}
+				}).start();
 			});
+			
 		});
 	}
 	
-	public void addToCart() {}
-	
-	
-	public void lookupProxyList(ProxyAPI api) {
-		api.getUrls().forEach(url -> {
-			try {
-				api.readResponse(httpClient.sendGET(url));
-				proxy.add(api);
-			}catch (Exception e) {
-				e.printStackTrace();
-			}
+	public void lookupProxyList(ProxyAPI... api) {
+		HTTPClient httpClient = new HTTPClient();
+		Stream.of(api).forEach(proxy -> {
+			proxy.getUrls().forEach(url -> {
+				try {
+					httpClient.openConnection(url);
+					proxy.parseResponse(httpClient.readHTTPBodyResponse());
+				}catch (Exception e) {
+					e.printStackTrace();
+				}
+				httpClient.disconnect();
+			});
+			proxies.add(proxy);
 		});
 	}
-	
-	public HTTPClient getHttpCliet() {
-		return httpClient;
-	}
-	public void setHttpCliet(HTTPClient httpCliet) {
-		this.httpClient = httpCliet;
-	}
-	
 }
