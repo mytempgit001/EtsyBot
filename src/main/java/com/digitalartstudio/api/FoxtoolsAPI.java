@@ -27,7 +27,9 @@ public class FoxtoolsAPI implements ProxyAPI{
 	}
 
 	@Override
-	public void readResponse(StringBuilder json) {
+
+	public void parseResponse(StringBuilder json) {
+
 		try {
 			Response resp = new ObjectMapper().readValue(json.toString(), FoxtoolsAPI.class).getResponse();
 			if(response == null)

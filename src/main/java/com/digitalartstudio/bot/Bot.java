@@ -2,14 +2,14 @@ package com.digitalartstudio.bot;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
+import java.util.stream.Stream;
 import com.digitalartstudio.api.ProxyAPI;
 import com.digitalartstudio.network.HTTPClient;
 
 public abstract class Bot {
 	
-	private List<ProxyAPI> proxies;
+	protected List<ProxyAPI> proxies;
 	
 	public Bot() {
 		proxies = new ArrayList<>();
@@ -17,13 +17,12 @@ public abstract class Bot {
 	
 	public void viewPage(String... pages) {
 		proxies.forEach(proxy -> {
-			new Thread(() -> {
-				Map<String, Integer> remotes = proxy.getRemoteHosts();
-				remotes.forEach((proxyIp, proxyPort) -> {
+			proxy.getRemoteHosts().forEach((proxyIp, proxyPort) -> {
+				new Thread(() -> {
 					for(String destUrl : pages) {
+						HTTPClient httpClient = new HTTPClient();
 						try {
-							HTTPClient httpClient = new HTTPClient();
-							httpClient.openConnectionUsingProxy(destUrl, proxyIp, proxyPort);
+							httpClient.openConnectionProxy(destUrl, proxyIp, proxyPort);
 							httpClient.setHeader("User-Agent", "Mozilla/5.0");
 							httpClient.setHeader("Keep-Alive", "300");
 							httpClient.setHTTPMethod("GET");
@@ -33,23 +32,27 @@ public abstract class Bot {
 							e.printStackTrace();
 							break;
 						}
+						httpClient.disconnect();
 					}
-				});
-			}).start();
+				}).start();
+			});
+			
 		});
 	}
 	
-	public void lookupProxyList(ProxyAPI api) {
+	public void lookupProxyList(ProxyAPI... api) {
 		HTTPClient httpClient = new HTTPClient();
-		api.getUrls().forEach(url -> {
-			try {
-				httpClient.openConnection(url);
-				StringBuilder httpResponse = httpClient.readResponse();
-				api.readResponse(httpResponse);
-			}catch (Exception e) {
-				e.printStackTrace();
-			}
+		Stream.of(api).forEach(proxy -> {
+			proxy.getUrls().forEach(url -> {
+				try {
+					httpClient.openConnection(url);
+					proxy.parseResponse(httpClient.readHTTPBodyResponse());
+				}catch (Exception e) {
+					e.printStackTrace();
+				}
+				httpClient.disconnect();
+			});
+			proxies.add(proxy);
 		});
-		proxies.add(api);
 	}
 }

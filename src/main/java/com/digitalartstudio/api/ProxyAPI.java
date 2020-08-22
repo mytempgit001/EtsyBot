@@ -7,5 +7,6 @@ public interface ProxyAPI {
 	
 	List<String> getUrls();
 	Map<String, Integer> getRemoteHosts();
-	void readResponse(StringBuilder response);
+	void parseResponse(StringBuilder response);
+
 }

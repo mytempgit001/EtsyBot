@@ -26,7 +26,8 @@ public class ProxyListAPI implements ProxyAPI{
 	}
 
 	@Override
-	public void readResponse(StringBuilder response) {
+
+	public void parseResponse(StringBuilder response) {
 		Pattern pattern = Pattern.compile(IP_REGEXP);
 		Stream.of(response.toString().split(System.lineSeparator())).forEach(str -> {
 			if(pattern.matcher(str).matches()) {
