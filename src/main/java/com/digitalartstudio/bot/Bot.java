@@ -26,10 +26,11 @@ public class Bot {
 							httpClient.setHeader("User-Agent", "Mozilla/5.0");
 							httpClient.setHeader("Keep-Alive", "300");
 							httpClient.setHTTPMethod("GET");
+							httpClient.getConnection().setReadTimeout(20000);
+							httpClient.getConnection().setConnectTimeout(10000);
 							httpClient.connect();
 							System.out.println("OK: " + httpClient.getResponseCode() + ", using proxy? " + httpClient.usingProxy() + ", " + proxyIp + ":" + proxyPort);
 						}catch(Exception e) {
-							e.printStackTrace();
 							break;
 						}
 						httpClient.disconnect();

@@ -14,8 +14,7 @@ public class PubProxy implements ProxyAPI{
 
 	@Override
 	public List<String> getUrls() {
-		return List.of("http://pubproxy.com/api/proxy?limit=20",
-				"http://pubproxy.com/api/proxy?limit=20");
+		return List.of("http://pubproxy.com/api/proxy?limit=20");
 	}
 
 	@Override
