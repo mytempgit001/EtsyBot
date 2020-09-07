@@ -4,8 +4,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import com.digitalartstudio.json.ProxyResultItem;
-import com.digitalartstudio.json.Response;
+
+import com.digitalartstudio.json.foxtools.ProxyResultItem;
+import com.digitalartstudio.json.foxtools.Response;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -22,14 +23,18 @@ public class FoxtoolsAPI implements ProxyAPI{
 	}
 
 	@Override
-	public Map<String, Integer> getIpAndPort() {
-		return response.getItems().stream().collect(Collectors.toMap(ProxyResultItem::getIp, ProxyResultItem::getPort));
+	public Map<String, Integer> getRemoteHosts() {
+		return response != null ? response.getItems().stream().collect(Collectors.toMap(ProxyResultItem::getIp, ProxyResultItem::getPort)) : null;
 	}
 
 	@Override
-	public void readResponse(StringBuilder json) {
+	public void parseResponse(StringBuilder json) {
 		try {
-			response =  new ObjectMapper().readValue(json.toString(), FoxtoolsAPI.class).getResponse();
+			Response resp = new ObjectMapper().readValue(json.toString(), FoxtoolsAPI.class).getResponse();
+			if(response == null)
+				response = resp;
+			else
+				response.getItems().addAll(resp.getItems());
 		} catch (JsonProcessingException e) {
 			e.printStackTrace();
 		}
