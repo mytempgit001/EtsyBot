@@ -1,4 +1,4 @@
-package com.digitalartstudio.proxyproviders;
+package com.digitalartstudio.proxy.providers;
 
 import java.util.HashMap;
 import java.util.List;

@@ -128,8 +128,8 @@ public class HTTPClient {
 		return webProxy;
 	}
 
-	public void setWebProxy(Proxy webProxy) {
-		this.webProxy = webProxy;
+	public void setWebProxy(String ip, int port) {
+		this.webProxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(ip, port));
 	}
 
 	public Map<String, String> getSessCokies() {
