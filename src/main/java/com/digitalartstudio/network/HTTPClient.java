@@ -10,6 +10,7 @@ import java.net.MalformedURLException;
 import java.net.ProtocolException;
 import java.net.Proxy;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -77,7 +78,10 @@ public class HTTPClient {
 	}
 	
 	public List<String> separateResponseCookieFromMeta(){
-		return connection.getHeaderFields().get("Set-Cookie").parallelStream().map(str -> str.split(";")[0]).collect(Collectors.toList());
+		Map<String,List<String>> headers = connection.getHeaderFields();
+		List<String> localCookies = headers.get("set-cookie") == null ? headers.get("Set-Cookie") : headers.get("set-cookie");
+		
+		return localCookies != null ? localCookies.parallelStream().map(str -> str.split(";")[0]).collect(Collectors.toList()) : new ArrayList<>();
 	}
 	
 	public void setDeafaultOptions(String method) throws Exception {

@@ -1,18 +1,22 @@
 package com.digitalartstudio.proxy;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import com.digitalartstudio.constants.Constants;
-import com.digitalartstudio.network.HTTPClient;
 import com.digitalartstudio.proxy.providers.ProxyProvider;
 
 public class ProxyWorker {
 	
 	private List<ProxyProvider> proxyProviders = new ArrayList<>();
+	protected Map<String, Integer> hosts;
+	private ProxyUpdater pUpdater;
+	
+	public ProxyWorker(Map<String, Integer> hosts) {
+		this.hosts = hosts;
+	}
 	
 	public void reveal(ProxyProvider... proxyProvider) {
 		Stream.of(proxyProvider).forEach(proxy -> {
@@ -21,41 +25,55 @@ public class ProxyWorker {
 		});
 	}
 	
-	public Map<String, Integer> filter() {
-//		TODO дописать
-//		HTTPClient httpClient = new HTTPClient();
-		Map<String, Integer> whiteListHosts = new HashMap<>();
-		
-		proxyProviders.forEach(proxy -> {
-			proxy.getRemoteHosts().forEach((ip, port) -> {
-				whiteListHosts.put(ip, port); 
-//				int rcode = 0;
-//				try {
-//					httpClient.setWebProxy(ip, port);
-//					httpClient.openConnectionProxy(Constants.ETSY_HOME);
-//					
-//					rcode = httpClient.getConnection().getResponseCode();
-//					if(rcode == 200)
-//						whiteListHosts.put(ip, port); 
-//				}catch(Exception e) {
-//					e.printStackTrace();
-//				}
-//				System.out.println(ip + ":" + port + " - " + rcode);
-			});
-		});
-		return whiteListHosts;
+	public Map<String, Integer> filterHosts() {
+		return proxyProviders.stream()
+			.flatMap(proxy -> proxy.getRemoteHosts().entrySet().stream())
+			.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (existing, replacement) -> existing));
 	}
 
 	public void launchUpdater() {
-//		TODO дописать
-		filter();
+		pUpdater = new ProxyUpdater();
+		pUpdater.setDaemon(true);
+		pUpdater.start();
 	}
 	
+	public void updateHosts() {
+		synchronized(pUpdater) {
+			pUpdater.notify();
+		}
+	}
+	
+	public ProxyUpdater getpUpdater() {
+		return pUpdater;
+	}
+
+	public void setpUpdater(ProxyUpdater pUpdater) {
+		this.pUpdater = pUpdater;
+	}
+
 	public List<ProxyProvider> getProxyProviders() {
 		return proxyProviders;
 	}
 
 	public void setProxyProviders(List<ProxyProvider> proxyProviders) {
 		this.proxyProviders = proxyProviders;
+	}
+	
+	
+	private class ProxyUpdater extends Thread{
+		@Override
+		public void run() {
+			try {
+				synchronized(this) {
+					while(true) {
+						proxyProviders.forEach(proxy -> proxy.updateHosts());
+						hosts = filterHosts();
+						wait();
+					}
+				}
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
 	}
 }
