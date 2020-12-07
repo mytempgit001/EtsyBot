@@ -1,14 +1,22 @@
 package com.digitalartstudio.main;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import com.digitalartstudio.bot.EtsyBot;
+
 public class Main {
 	
 	public static void main(String[] args) throws Exception {
-//		EtsyBot bot = new EtsyBot();
-//		bot.launchProxyFilter();
-//		bot.launchProxyUpdater();
+		EtsyBot bot = new EtsyBot();
+		bot.launchProxyFilter();
+		bot.launchProxyUpdater();
 		
-//		bot.executeInPoolThreadBatchBot("867167949", "seasonal sign");
-//		bot.executeInPoolThreadBatchBot("867167949", "halloween poster");
+		
+		Map<String, List<String>> data = new HashMap<>();
+		data.put("867167949", List.of("seasonal sign", "halloween poster"));
+		bot.executeInPoolThreadBatchBot(data);
 //		bot.executeInPoolThreadBatchBot("867167949", "happy halloween art");
 //		bot.executeInPoolThreadBatchBot("867167949", "pumpkin sign svg");
 		
